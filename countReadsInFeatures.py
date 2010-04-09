@@ -1,10 +1,22 @@
 #!/usr/bin/python
+usage = '''
 
+    For each feature in --bed, counts the number of reads in --sam/--bam that
+    intersect that feature.
+
+    Requires the following to be on the path:
+
+        samtools (http://samtools.sourceforge.net/) 
+        bedtools (http://code.google.com/p/bedtools/)
+
+    Ryan Dale 2010 (dalerr@niddk.nih.gov)
+'''
 import os
 import sys
 import optparse
 import logging
 import subprocess
+import tempfile
 
 # Set up logger
 format = "[%(asctime)s] %(message)s"
@@ -28,22 +40,20 @@ def bam_to_bed(BAM,READS):
             '-i',BAM,
             '>',READS]
     os.system(' '.join(cmds))
-    logging.info('..."%s" now contains reads from SAM/BAM file.'%READS)
 
 def count_reads_in_exons(READS,INBED,FEATURECOUNTS):
     """Counts the reads in each exon using intersectBed"""
-    logging.info('Counting reads in "%s" per feature in "%s"...' % (READS,INBED))
+    logging.info('Counting reads per feature in %s...' % (INBED))
     cmds = ['intersectBed',
             '-a', INBED,
             '-b', READS,
             '-c',
             '>',FEATURECOUNTS]
     os.system(' '.join(cmds))
-    logging.info('"...%s" now has the read counts per exon.'%FEATURECOUNTS)
 
 def make_table(FEATURECOUNTS,FEATURECOUNTSTXT):
     """Convert BED file into a table"""
-    logging.info('Converting "%s" into a tab-delimited table...' % FEATURECOUNTS)
+    logging.info('Creating tab-delimited table...')
     cmds = ['cut -f4,5',
             FEATURECOUNTS,
             '>',FEATURECOUNTSTXT]
@@ -51,23 +61,12 @@ def make_table(FEATURECOUNTS,FEATURECOUNTSTXT):
     logging.info('DONE.  Results are in "%s".' % FEATURECOUNTSTXT)
 
 if __name__ == "__main__":
-    usage = '''
 
-    For each feature in --bed, counts the number of reads in --sam/--bam that
-    intersect that feature.
-
-    Requires the following to be on the path:
-
-        samtools (http://samtools.sourceforge.net/) 
-        bedtools (http://code.google.com/p/bedtools/)
-
-    Ryan Dale 2010 (dalerr@niddk.nih.gov)
-    '''
     op = optparse.OptionParser(usage=usage)
     op.add_option('--sam',dest='sam',help='Input SAM file (if --bam not specified)')
     op.add_option('--bam',dest='bam',help='Input BAM file (if --sam not specified)')
     op.add_option('--bed',dest='bed',help='Input BED file containing regions of interest')
-    op.add_option('--prefix',dest='prefix',help='Optional prefix to add to output files')
+    op.add_option('--out',dest='out',help='Output text file with read counts for each feature')
     options,args = op.parse_args()
 
     # Check for command line options
@@ -79,7 +78,9 @@ if __name__ == "__main__":
         op.print_help()
         print '\nERROR: Please specify a BED file.\n'
         sys.exit()
-
+    if not options.out:
+        op.print_help()
+        print '\nERROR: Please specify an output file.\n'
     # Check for 3rd-party tools
     try:
         p = subprocess.Popen(['samtools'],stderr=subprocess.PIPE)
@@ -104,15 +105,10 @@ if __name__ == "__main__":
     if options.bam:
         BAM = options.bam
 
-    if options.prefix:
-        PREFIX = '%s-' % options.prefix
-    else:
-        PREFIX = ''
-
-    READS = PREFIX + '%s-converted.bed' % os.path.splitext(BAM)[0]
+    READS = tempfile.mktemp()
     INBED = options.bed
-    FEATURECOUNTS = PREFIX + '%s-feature-counts.bed' % os.path.splitext(INBED)[0]
-    FEATURECOUNTSTXT = os.path.splitext(FEATURECOUNTS)[0]+'.txt'
+    FEATURECOUNTS = tempfile.mktemp()
+    FEATURECOUNTSTXT = options.out
 
     if options.sam:
         sam_to_bam(SAM)
@@ -120,4 +116,7 @@ if __name__ == "__main__":
     bam_to_bed(BAM,READS)
     count_reads_in_exons(READS,INBED,FEATURECOUNTS)
     make_table(FEATURECOUNTS,FEATURECOUNTSTXT)
-
+    
+    # clean up tempfiles
+    os.remove(READS)
+    os.remove(FEATURECOUNTS)
