@@ -82,22 +82,18 @@ do that conversion and this step will run much more quickly.  It's also
 probably a good idea to add a prefix so you can keep track of the files
 downstream::
 
-    ./countReadsInFeatures.py --sam males_1.sam --bed const.exons.bed --prefix m1
-    ./countReadsInFeatures.py --bam females_1.bam --bed const.exons.bed --prefix f1
+    ./countReadsInFeatures.py --sam males_1.sam --bed const.exons.bed --out males_1.txt
+    ./countReadsInFeatures.py --bam females_1.bam --bed const.exons.bed --out females_1.txt
 
 Note that you can parallelize this step, but the advantage may depend on your
 disk access speed.
 
 Each of these runs will take a couple of minutes.  The output of each run is a
-``.txt`` file, named with the prefix you provided, then the basename of the BED
-file you provided as input, followed by ``-feature-counts.txt``.  
+tab-delimited text file with two columns.  
 
-So in the example above, you would end up with these two files::
-
-  m1-const.exons-feature-counts.txt
-  f1-const.exons-feature-counts.txt
-
-Each of these files has the following form (exon name, read count)::
+So in the example above, you would end up with the two files ``males_1.txt``
+and ``females_1.txt``.  Each of these files has the following form (feature name,
+read count)::
 
     exon1   30
     exon2   900
@@ -105,17 +101,20 @@ Each of these files has the following form (exon name, read count)::
 
 STEP 4: compile results
 -----------------------
-After you have many ``*-feature-counts.txt`` files, combine them with ``combineFeatureCounts.py``::
+After you have many text files from many runs of ``countReadsInFeatures.py``,
+combine them with ``combineFeatureCounts.py`` by specifying the output file with ``--out`` and
+then a list of the files you want to combine::
 
-    ./combineFeatureCounts.py --out final-counts.txt m1-const.exons-feature-counts.txt f1-const.exons-feature-counts.txt
+    ./combineFeatureCounts.py --out final-counts.txt males_1.txt females_1.txt
 
-The result is a tab-delimited text file, ``final-counts.txt``.  The first column
-is the feature name, and the consecutive columns are the the counts in each
-of the ``*-feature-counts.txt`` files you specified.  This file will have the
-form::
+The result is a tab-delimited text file, ``final-counts.txt``.  The first
+column is the feature name, and the consecutive columns are the the counts in
+each of the files you specified, with header names identical to the files they
+came from.  So this file will have the form::
 
-    exon1   30  29
-    exon2   900 3
-    exon3   0   10
+    feature males_1.txt females_1.txt
+    exon1   30          29
+    exon2   900         3
+    exon3   0           10
 
 This can now be imported into R or Python for further analysis.
