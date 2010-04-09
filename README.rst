@@ -1,12 +1,16 @@
 Generating a feature-by-reads matrix
 ====================================
 
-This is a collection of Python scripts that wrap ``samtools`` and ``bedtools``
-programs to summarize short-read data on a feature-by-feature basis.  The first
-steps describe the creation of a non-trivial feature set (constitutive exons
-that do not overlap any other exons) and is a rather specific example, but the
-last steps are quite generic and should be applicable to a wide range of
-problems.
+This is a small collection of Python scripts that wrap ``samtools`` and
+``bedtools`` programs to summarize short-read data on a feature-by-feature
+basis.  These scripts allow you to combine one or many SAM/BAM files with a BED
+file to get a tab-delimited table of the number of reads in each feature of the
+BED file.
+
+The first steps describe the creation of a non-trivial feature set
+(constitutive exons that do not overlap any other exons) and is a rather
+specific example, but the last steps are quite generic and should be applicable
+to a wide range of problems.
 
 .. note:: 
 
@@ -85,11 +89,8 @@ downstream::
     ./countReadsInFeatures.py --sam males_1.sam --bed const.exons.bed --out males_1.txt
     ./countReadsInFeatures.py --bam females_1.bam --bed const.exons.bed --out females_1.txt
 
-Note that you can parallelize this step, but the advantage may depend on your
-disk access speed.
-
-Each of these runs will take a couple of minutes.  The output of each run is a
-tab-delimited text file with two columns.  
+Each of these runs will take a 30 secs to a couple of minutes.  The output of
+each run is a tab-delimited text file with two columns.  
 
 So in the example above, you would end up with the two files ``males_1.txt``
 and ``females_1.txt``.  Each of these files has the following form (feature name,
