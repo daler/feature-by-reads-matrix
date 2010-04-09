@@ -94,8 +94,7 @@ cmds = ['intersectBed',
         '-c',
         '| grep "\t1$"',
         '| cut -f1,2,3,4',
-        '> constitutive-exons.bed']
+        '>',options.bed]
 os.system(' '.join(cmds))
 os.remove(tmp)
-logging.info('BED file is %s.'% options.bed)
 
