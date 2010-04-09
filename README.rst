@@ -3,8 +3,8 @@ Generating a feature-by-reads matrix
 
 .. note:: 
 
-    You can call any of the scripts with no options or with the -h option to get
-    help.
+    You can call any of the scripts with no options or with the -h option to
+    get help.
 
 STEP 0: Setup and installation
 ------------------------------
@@ -13,9 +13,9 @@ You will need these programs installed on your path:
     * samtools (http://samtools.sourceforge.net/)
     * bedtools (http://code.google.com/p/bedtools/)
 
-For the first part, you will also need to install the ``GFFutils`` module::
-    
-
+For manipulating the GFF file, you will also need to install the ``GFFutils``
+module (http://github.com/daler/GFFutils).  If you already have a file
+containing the features you want counts on, skip right to Step 3 . . .
 
 STEP 1: GFF db creation
 -----------------------
