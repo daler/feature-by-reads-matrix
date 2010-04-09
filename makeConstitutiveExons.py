@@ -36,6 +36,7 @@ if options.gff:
     GFFutils.create_gffdb(options.gff, options.gffdb)
 G = GFFutils.GFFDB(options.gffdb)
 
+logging.info('Finding exons found in all isoforms of a gene...')
 tmp = tempfile.mktemp()
 fout = open(tmp,'w')
 ngenes = float(G.count_features_of_type('gene'))
@@ -49,7 +50,7 @@ for gene in G.features_of_type('gene'):
     # print some feedback every 100 genes
     if c % 100 == 0:
         perc = c/ngenes*100
-        print '\r%s (%d%%)'% (c,perc),
+        print '\r%s genes done (%d%%)'% (c,perc),
         sys.stdout.flush()
     c+=1
     const_expr_exons = []
@@ -97,4 +98,5 @@ cmds = ['intersectBed',
         '>',options.bed]
 os.system(' '.join(cmds))
 os.remove(tmp)
+logging.info('Done.')
 
