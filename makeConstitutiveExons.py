@@ -1,102 +1,50 @@
 #!/usr/bin/python
-
-usage = """
-
-    Script to generate a BED file of constitutive exons.
-
-    Input is either a pre-compiled GFF database, or a GFF file which will be
-    compiled into a GFF database. 
+usage="""
+This script takes, as input, a 
 """
-import GFFutils
-import os,sys,tempfile
 import optparse
-import logging
+import GFFutils
 
-# Set up logger
-format = "[%(asctime)s] %(message)s"
-logging.basicConfig(level=logging.DEBUG,format=format)
-
-op = optparse.OptionParser(usage=usage)
-op.add_option('--gff',dest='gff',help='GFF file to parse')
-op.add_option('--gffdb',dest='gffdb',help='Pre-compiled GFF database, or'
-                                          'database to create if -gff specified')
-op.add_option('--bed',dest='bed',help='Output BED file to create')
-
+op = optparse.OptionParser()
+op.add_option('--dbfn', help='GFF (or GTF) database as created by GFFutils')
+op.add_option('-o', help='Output file to write exons to')
+op.add_option('--level', help='Specify --level=exons or --level=genes to determine which ID '
+                              'will be inserted in the gene_id attribute of the output GFF file.')
+op.add_option('--type', default='GFF', help='Use --type=GTF for GTF files.')
 options,args = op.parse_args()
 
-if not options.gffdb:
-    op.print_help()
-    print '\nERROR: Please specify a GFF database filename with --gffdb'
-    sys.exit()
-if not options.bed:
-    op.print_help()
-    print '\nERROR: Please specify an output file with --bed'
-    sys.exit()
-if options.gff:
-    GFFutils.create_gffdb(options.gff, options.gffdb)
-G = GFFutils.GFFDB(options.gffdb)
+if options.type == 'GFF':
+    G = GFFutils.GFFDB(options.dbfn)
+if options.type == 'GTF':
+    G = GFFutils.GTFDB(options.dbfn)
 
-logging.info('Finding exons found in all isoforms of a gene...')
-tmp = tempfile.mktemp()
-fout = open(tmp,'w')
-ngenes = float(G.count_features_of_type('gene'))
-c = 0
-for gene in G.features_of_type('gene'):
-    if 'mito' in gene.chr:
-        continue
-    if 'Het' in gene.chr:
-        continue
+if __name__ == "__main__":
 
-    # print some feedback every 100 genes
-    if c % 100 == 0:
-        perc = c/ngenes*100
-        print '\r%s genes done (%d%%)'% (c,perc),
-        sys.stdout.flush()
-    c+=1
-    const_expr_exons = []
+    fout = open('const.exons.named-for-genes.bed','w')
 
-    # get the isoforms for this gene
-    isoforms = [i for i in G.children(gene.id) if i.featuretype=='mRNA']
-    n_isoforms = len(isoforms)
-    #gene_isoform_ids = set([i.id for i in isoforms])
-    # for each exon (child of level 2) for this gene...
-    children = G.children(gene.id,level=2)
-    for child in children:
-        if child.featuretype != 'exon':
-            continue
-        #exon_id = child.id
-        #...get the exon's parent mRNA
-        n_parents = len(list(G.parents(child.id,level=1,featuretype='mRNA')))
+    # make a dictionary of each gene and the number of isoforms it has
+    genes = {}
+    for gene in G.features_of_type('gene'):
+        genes[gene.id] = G.n_gene_isoforms(gene.id)
 
-        # if the number of exon mRNA parents is the same as the number of gene
-        # mRNA children, this exon is found in all isoforms.
-        if n_parents == n_isoforms:
-            const_expr_exons.append(child)
+    # make a dictionary of each exon and the number of isoforms it has; 
+    # also make a lookup dictionary of which exon goes to what gene
+    exons = {}
+    exon_genes = {}
+    for exon in G.features_of_type('exon'):
+        exons[exon.id] = G.n_exon_isoforms(exon.id)
+        exon_genes[exon.id] = G.exons_gene(exon.id)
 
-    # decide what to write out to file...
-    if len(const_expr_exons) > 0:
-        #fout.write(gene.to_bed())
-        pass
-        for isoform in isoforms:
-            #fout.write(isoform.to_bed())
+    # combine the dictionaries to determine if the exon's isoform count equals the gene's isoform count.
+    # If so, it's a keeper...
+    for exon,exon_isoforms in exons.iteritems():
+        try:
+            gene_isoforms = genes[exon_genes[exon]]
+            if exon_isoforms == gene_isoforms:
+                e = G[exon]
+                e.add_attribute('gene_id',exon_genes[exon])
+                fout.write(e.tostring())
+        except KeyError:
             pass
-        exon_count = 0
-        for exon in const_expr_exons:
-            exon_count += 1
-            line = '%s\t%s\t%s\t%s\n' % ( exon.chr, exon.start, exon.stop, exon.id)
-            fout.write(line)
-fout.close()
-print 
-
-logging.info('Filtering out exons that overlap another exon...')
-cmds = ['intersectBed',
-        '-a',tmp,
-        '-b',tmp,
-        '-c',
-        '| grep "\t1$"',
-        '| cut -f1,2,3,4',
-        '>',options.bed]
-os.system(' '.join(cmds))
-os.remove(tmp)
-logging.info('Done.')
+    fout.close()
 
