@@ -22,7 +22,7 @@ if options.type == 'GTF':
 
 if __name__ == "__main__":
 
-    fout = open('const.exons.named-for-genes.bed','w')
+    fout = open(options.o,'w')
 
     # make a dictionary of each gene and the number of isoforms it has
     genes = {}
