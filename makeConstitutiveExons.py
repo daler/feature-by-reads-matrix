@@ -33,7 +33,7 @@ if __name__ == "__main__":
     # also make a lookup dictionary of which exon goes to what gene
     exons = {}
     exon_genes = {}
-    for exon in G.features_of_type('exon'):
+    for exon in G.features_of_type(exon_feature):
         exons[exon.id] = G.n_exon_isoforms(exon.id)
         exon_genes[exon.id] = G.exons_gene(exon.id)
 
@@ -45,6 +45,9 @@ if __name__ == "__main__":
             if exon_isoforms == gene_isoforms:
                 e = G[exon]
                 e.add_attribute('gene_id',exon_genes[exon])
+                
+                # force it to be of type exon
+                e.featuretype = 'exon'
                 fout.write(e.tostring())
         except KeyError:
             pass
