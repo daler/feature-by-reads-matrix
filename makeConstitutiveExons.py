@@ -93,6 +93,7 @@ if __name__ == "__main__":
 
             # Name it according to the options
             exon.add_attribute('gene_id',id_to_use)
+            exon.value = 0
             
             # force it to be of type exon
             exon.featuretype = 'exon'
