@@ -22,10 +22,10 @@ for arg in required_args:
         print '\nArgument "%s" required.\n'%arg
         sys.exit()
 
-if options.type == 'GFF':
+if options.ftype == 'GFF':
     G = GFFutils.GFFDB(options.dbfn)
     exon_feature = 'exon'
-if options.type == 'GTF':
+if options.ftype == 'GTF':
     G = GFFutils.GTFDB(options.dbfn)
     exon_feature = 'CDS'
 
