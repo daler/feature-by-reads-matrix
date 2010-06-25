@@ -51,11 +51,16 @@ if __name__ == "__main__":
     sys.stdout.flush()
     for exon in G.features_of_type(exon_feature):
         
+        # which gene this exon belongs to
+        try:
+            exon_gene_parents[exon.id] = G.exons_gene(exon.id)
+        except TypeError:
+            print exon.id
+            continue
+
         # how many isoforms this exon is found in
         exons[exon.id] = G.n_exon_isoforms(exon.id)
 
-        # which gene this exon belongs to
-        exon_gene_parents[exon.id] = G.exons_gene(exon.id)
 
     # combine the dictionaries to determine if the exon's isoform count equals
     # the gene's isoform count.  If so, it's a keeper...
