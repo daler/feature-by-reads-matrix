@@ -12,7 +12,7 @@ op.add_option('--gffout', help='Output file to write exons to')
 op.add_option('--lengthsout', help='Output file containing the total length of each feature')
 op.add_option('--level', help='Specify --level=exon or --level=gene to determine which ID '
                               'will be inserted in the gene_id attribute of the output GFF file.')
-op.add_option('--type', default='GFF', help='Use --type=GTF for GTF files.')
+op.add_option('--ftype', default='GFF', help='Use --ftype=GTF for GTF files.')
 options,args = op.parse_args()
 
 required_args = ['dbfn','gffout','lengthsout','level']
