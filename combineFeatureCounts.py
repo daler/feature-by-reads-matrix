@@ -24,7 +24,7 @@ fns = args
 d = {}
 for i,f in enumerate(fns):
     for line in open(f):
-        feature,count = line.split()
+        feature,count = line.strip().split('\t')
         value = d.setdefault(feature,{})
         value[f] = count
 fout = open(options.out,'w')
